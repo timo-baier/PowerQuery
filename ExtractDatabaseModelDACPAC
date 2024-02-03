@@ -1,0 +1,16 @@
+let
+    Source = Xml.Tables(File.Contents("D:\model.xml")),
+    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Attribute:FileFormatVersion", Int64.Type}, {"Attribute:SchemaVersion", Int64.Type}, {"Attribute:DspName", type text}, {"Attribute:CollationLcid", Int64.Type}, {"Attribute:CollationCaseSensitive", type logical}}),
+    #"Removed Other Columns" = Table.SelectColumns(#"Changed Type",{"Model"}),
+    #"Expanded Model" = Table.ExpandTableColumn(#"Removed Other Columns", "Model", {"Element"}, {"Element"}),
+    #"Expanded Element" = Table.ExpandTableColumn(#"Expanded Model", "Element", {"Property", "Attribute:Type", "Attribute:Name", "Relationship", "Annotation"}, {"Property", "Attribute:Type", "Attribute:Name", "Relationship", "Annotation"}),
+    #"Filtered Rows" = Table.SelectRows(#"Expanded Element", each ([#"Attribute:Type"] = "SqlView")),
+    #"Removed Other Columns1" = Table.SelectColumns(#"Filtered Rows",{"Property", "Attribute:Name"}),
+    #"Expanded Property" = Table.ExpandTableColumn(#"Removed Other Columns1", "Property", {"Value", "Attribute:Name", "Attribute:Value"}, {"Property.Value", "Property.Attribute:Name", "Property.Attribute:Value"}),
+    #"Filtered Rows1" = Table.SelectRows(#"Expanded Property", each ([#"Property.Attribute:Name"] = "QueryScript")),
+    #"Removed Other Columns2" = Table.SelectColumns(#"Filtered Rows1",{"Property.Value", "Attribute:Name"}),
+    #"Expanded Property.Value" = Table.ExpandTableColumn(#"Removed Other Columns2", "Property.Value", {"Element:Text", "Attribute:QuotedIdentifiers", "Attribute:AnsiNulls"}, {"Element:Text", "Attribute:QuotedIdentifiers", "Attribute:AnsiNulls"}),
+    #"Removed Other Columns3" = Table.SelectColumns(#"Expanded Property.Value",{"Element:Text", "Attribute:Name"}),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Removed Other Columns3",{{"Element:Text", type text}, {"Attribute:Name", type text}})
+in
+    #"Changed Type1"
